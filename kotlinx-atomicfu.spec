@@ -12,6 +12,9 @@ Source0:	kotlinx-atomicfu-%{version}.tar.gz
 BuildArch:	noarch
 BuildRequires:	java-21-openjdk-devel
 BuildRequires:	kotlin
+# kotlin-stdlib.jar is the unversioned jar from kotlin-libs.
+# mvn(kotlin-stdlib) installs only kotlin-stdlib-2.4.21.jar.
+BuildRequires:	kotlin-libs
 BuildRequires:	sysjar
 BuildRequires:	javapackages-filesystem
 BuildRequires:	mvn(org.jetbrains.kotlin:kotlin-stdlib)
