@@ -1,11 +1,12 @@
 Name:		kotlinx-atomicfu
-Version:	0.26.1
+Version:	0.33.0
 Release:	1
 Summary:	AtomicFU JVM atomic variables
 Group:		Development/Java
 License:	Apache-2.0
 URL:		https://github.com/Kotlin/kotlinx-atomicfu
-# kotlinx-atomicfu tag 0.26.1. JVM artifact atomicfu-jvm: commonMain plus jvmMain.
+# Tag 0.33.0. Compile atomicfu/src/commonMain + jvmMain only (no android/apple/js/native/linux/mingw/concurrent).
+# jvmMain ParkingSupport/JvmParkingDelegator need concurrentMain expects; omit those two files.
 Source0:	kotlinx-atomicfu-%{version}.tar.gz
 
 BuildArch:	noarch
@@ -17,7 +18,7 @@ BuildRequires:	mvn(org.jetbrains.kotlin:kotlin-stdlib)
 
 %description
 org.jetbrains.kotlinx:atomicfu-jvm %{version}.
-JVM atomic references, ints, and longs from kotlinx-atomicfu 0.26.1,
+JVM atomic references, ints, and longs from kotlinx-atomicfu 0.33.0,
 compiled with the installed kotlinc 2.0.21.
 
 %prep
@@ -35,9 +36,13 @@ export PATH="$JAVA_HOME/bin:/usr/bin:/bin"
 CPSTD=%{_javadir}/kotlin-stdlib.jar
 test -s "$CPSTD"
 mkdir -p classes module
-find src/common src/jvm -name '*.kt' > sources.list
-test "$(wc -l < sources.list)" -eq 9
-find src/common -name '*.kt' | paste -sd, - > common.list
+# commonMain + jvmMain kt only; skip parking actuals (need concurrentMain expects)
+find atomicfu/src/commonMain atomicfu/src/jvmMain -name '*.kt' \
+	! -name 'JvmParkingDelegator.kt' \
+	! -name 'ParkingSupport.kt' \
+	> sources.list
+test "$(wc -l < sources.list)" -eq 11
+find atomicfu/src/commonMain -name '*.kt' | paste -sd, - > common.list
 common=$(cat common.list)
 kotlinc -J-Xmx1g -jvm-target 1.8 -language-version 2.0 -no-stdlib \
 	-Xmulti-platform -Xexpect-actual-classes \
@@ -45,10 +50,11 @@ kotlinc -J-Xmx1g -jvm-target 1.8 -language-version 2.0 -no-stdlib \
 	-cp "$CPSTD" -d classes @sources.list
 test -s classes/kotlinx/atomicfu/AtomicInt.class
 test -s classes/kotlinx/atomicfu/AtomicFU.class
+test -s classes/kotlinx/atomicfu/locks/SynchronousMutex.class
 javac --release 9 \
 	--module-path "$CPSTD" \
 	--patch-module "kotlinx.atomicfu=$PWD/classes" \
-	-d module java9/module-info.java
+	-d module atomicfu/src/jvmMain/java9/module-info.java
 test -s module/module-info.class
 printf '%s\n' 'Manifest-Version: 1.0' > manifest.mf
 jar cfm atomicfu-jvm.jar manifest.mf -C classes . -C module .

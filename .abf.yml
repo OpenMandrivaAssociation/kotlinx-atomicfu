@@ -1,2 +1,4 @@
 sources:
+  kotlinx-atomicfu-0.33.0.tar.gz: 3341419a20038c84f97c6662125a4f03eef17f59
+removed_sources:
   kotlinx-atomicfu-0.26.1.tar.gz: dd850e35ab7ea387969bbf1d3afdfb4597d85288
